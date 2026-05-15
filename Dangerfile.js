@@ -67,3 +67,21 @@ if (needsTwoReviewers && approvals < 2) {
 } else if (!needsTwoReviewers && approvals < 1) {
   fail('This PR requires at least **1 approval** before merging.');
 }
+
+// ─── 8. REQUIRED TEMPLATE SECTIONS PRESENT ─────────────────────────────────
+const requiredSections = ['What changed', 'Ticket', 'How to test', 'Type of change', 'Checklist'];
+const missingSections = requiredSections.filter(section => {
+  const re = new RegExp(`^#+\\s+${section}\\s*$`, 'm');
+  return !re.test(prBody);
+});
+
+if (missingSections.length) {
+  const repoUrl = danger.github.pr.base.repo.html_url;
+  const templateUrl = `${repoUrl}/blob/main/.github/PULL_REQUEST_TEMPLATE.md`;
+  const sectionList = missingSections.map(s => `**${s}**`).join(', ');
+  fail(
+    `Missing required PR section(s): ${sectionList}. ` +
+    'Looks like a field might have been removed or the PR title/description was written by AI. ' +
+    `If you need the template you can find it at [.github/PULL_REQUEST_TEMPLATE.md](${templateUrl}).`
+  );
+}
