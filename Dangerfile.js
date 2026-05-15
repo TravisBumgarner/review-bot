@@ -8,6 +8,28 @@ const changedFiles = [
 const prBody = danger.github.pr.body || '';
 const prTitle = danger.github.pr.title;
 
+// ─── PREFLIGHT: REQUIRED TEMPLATE SECTIONS ─────────────────────────────────
+// If the PR body is missing any required headings, surface only that
+// message and skip every other check — the content checks below would
+// otherwise produce noisy duplicates against a body that's already broken.
+const requiredSections = ['What changed', 'Ticket', 'How to test', 'Type of change', 'Checklist'];
+const missingSections = requiredSections.filter(section => {
+  const re = new RegExp(`^#+\\s+${section}\\s*$`, 'm');
+  return !re.test(prBody);
+});
+
+if (missingSections.length) {
+  const repoUrl = danger.github.pr.base.repo.html_url;
+  const templateUrl = `${repoUrl}/blob/main/.github/PULL_REQUEST_TEMPLATE.md`;
+  const sectionList = missingSections.map(s => `**${s}**`).join(', ');
+  fail(
+    `Missing required PR section(s): ${sectionList}. ` +
+    'Looks like a field might have been removed or the PR title/description was written by AI. ' +
+    `If you need the template you can find it at [.github/PULL_REQUEST_TEMPLATE.md](${templateUrl}).`
+  );
+  return;
+}
+
 // ─── 1. PR TOO LARGE ───────────────────────────────────────────────────────
 const linesChanged = danger.github.pr.additions + danger.github.pr.deletions;
 
@@ -66,22 +88,4 @@ if (needsTwoReviewers && approvals < 2) {
   fail('This PR touches sensitive code (migrations, models, or billing) and requires **2 approvals** before merging.');
 } else if (!needsTwoReviewers && approvals < 1) {
   fail('This PR requires at least **1 approval** before merging.');
-}
-
-// ─── 8. REQUIRED TEMPLATE SECTIONS PRESENT ─────────────────────────────────
-const requiredSections = ['What changed', 'Ticket', 'How to test', 'Type of change', 'Checklist'];
-const missingSections = requiredSections.filter(section => {
-  const re = new RegExp(`^#+\\s+${section}\\s*$`, 'm');
-  return !re.test(prBody);
-});
-
-if (missingSections.length) {
-  const repoUrl = danger.github.pr.base.repo.html_url;
-  const templateUrl = `${repoUrl}/blob/main/.github/PULL_REQUEST_TEMPLATE.md`;
-  const sectionList = missingSections.map(s => `**${s}**`).join(', ');
-  fail(
-    `Missing required PR section(s): ${sectionList}. ` +
-    'Looks like a field might have been removed or the PR title/description was written by AI. ' +
-    `If you need the template you can find it at [.github/PULL_REQUEST_TEMPLATE.md](${templateUrl}).`
-  );
 }
