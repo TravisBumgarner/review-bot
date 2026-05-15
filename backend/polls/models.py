@@ -5,6 +5,10 @@ from django.utils import timezone
 class Question(models.Model):
     question_text = models.CharField(max_length=200)
     pub_date = models.DateTimeField('date published', default=timezone.now)
+    change_likelihood_tomorrow = models.PositiveSmallIntegerField(
+        default=0,
+        help_text='Estimated probability (0-100%) that the results will change tomorrow.',
+    )
 
     def __str__(self):
         return self.question_text
