@@ -1,0 +1,19 @@
+{
+  "name": "review-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Danger checks for review-bot PRs.",
+  "main": "Dangerfile.js",
+  "scripts": {
+    "danger": "danger ci"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TravisBumgarner/review-bot.git"
+  },
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "danger": "^13.0.7"
+  }
+}
