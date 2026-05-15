@@ -1,8 +1,8 @@
 <h1>{{ question.question_text }}</h1>
 
-<ul>
+<ul style="list-style:none;padding:0;">
 {% for choice in question.choices.all %}
-    <li>{{ choice.choice_text }} -- {{ choice.votes }} vote{{ choice.votes|pluralize }}</li>
+    <li style="border:2px solid {% cycle '#e74c3c' '#3498db' '#2ecc71' '#f1c40f' '#9b59b6' '#1abc9c' '#e67e22' '#34495e' %};border-radius:4px;padding:6px 10px;margin:4px 0;">{{ choice.choice_text }} -- {{ choice.votes }} vote{{ choice.votes|pluralize }}</li>
 {% endfor %}
 </ul>
 
