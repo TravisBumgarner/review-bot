@@ -1,4 +1,4 @@
-const { danger, fail, warn } = require('danger');
+const { danger, fail, warn, message } = require('danger');
 
 const changedFiles = [
   ...danger.git.modified_files,
@@ -29,12 +29,15 @@ if (missingSections.length) {
   );
   return;
 }
+message('✅ All required PR template sections are present.');
 
 // ─── 1. PR TOO LARGE ───────────────────────────────────────────────────────
 const linesChanged = danger.github.pr.additions + danger.github.pr.deletions;
 
 if (linesChanged > 500) {
   warn(`This PR changes **${linesChanged} lines**. Consider breaking it into smaller PRs for easier review.`);
+} else {
+  message(`✅ PR size (${linesChanged} lines) is under the 500-line threshold.`);
 }
 
 // ─── 2. WHAT CHANGED — section must be filled out ──────────────────────────
@@ -43,6 +46,8 @@ const whatChangedBody = whatChanged ? whatChanged[1].replace(/<!--[\s\S]*?-->/g,
 
 if (!whatChangedBody || whatChangedBody.length < 50) {
   fail('The **# What changed** section is too short. Please describe what this PR does and why.');
+} else {
+  message('✅ `# What changed` section looks substantive.');
 }
 
 // ─── 3. TICKET LINK ────────────────────────────────────────────────────────
@@ -51,6 +56,8 @@ const ticketBody = ticketSection ? ticketSection[1].replace(/<!--[\s\S]*?-->/g, 
 
 if (!ticketBody.match(/LIN-\d+|JIRA-\d+|#\d+/)) {
   warn('No ticket referenced in the **# Ticket** section (e.g. LIN-123 or #456).');
+} else {
+  message('✅ Ticket referenced in `# Ticket`.');
 }
 
 // ─── 4. HOW TO TEST — must have at least one step filled out ───────────────
@@ -60,6 +67,8 @@ const hasTestSteps = howToTestBody.match(/\d+\.\s+\S+/);
 
 if (!hasTestSteps) {
   fail('The **# How to test** section has no steps. Reviewers need to know how to verify this.');
+} else {
+  message('✅ `# How to test` includes test steps.');
 }
 
 // ─── 5. UNCHECKED CHECKLIST ITEMS ──────────────────────────────────────────
@@ -67,6 +76,8 @@ const unchecked = (prBody.match(/- \[ \]/g) || []).length;
 
 if (unchecked > 0) {
   fail(`There are **${unchecked} unchecked item(s)** in the checklist. Complete them before merging.`);
+} else {
+  message('✅ All checklist items are checked.');
 }
 
 // ─── 6. PR TITLE CONVENTION ────────────────────────────────────────────────
@@ -74,6 +85,8 @@ const validTitle = prTitle.match(/^(feat|fix|chore|docs|refactor|test|style|perf
 
 if (!validTitle) {
   fail(`PR title \`${prTitle}\` doesn't follow the convention. Use a prefix like \`feat:\`, \`fix:\`, \`chore:\`, etc.`);
+} else {
+  message(`✅ PR title follows the \`${validTitle[1]}:\` convention.`);
 }
 
 // ─── 7. MIGRATIONS REQUIRE 2 REVIEWERS ─────────────────────────────────────
@@ -84,8 +97,11 @@ const touchesStripe = changedFiles.some(f => f.match(/stripe|billing/));
 const needsTwoReviewers = touchesMigration || touchesModel || touchesStripe;
 const approvals = danger.github.reviews.filter(r => r.state === 'APPROVED').length;
 
+const requiredApprovals = needsTwoReviewers ? 2 : 1;
 if (needsTwoReviewers && approvals < 2) {
   fail('This PR touches sensitive code (migrations, models, or billing) and requires **2 approvals** before merging.');
 } else if (!needsTwoReviewers && approvals < 1) {
   fail('This PR requires at least **1 approval** before merging.');
+} else {
+  message(`✅ PR has ${approvals} approval(s), meeting the ${requiredApprovals}-approval requirement.`);
 }
